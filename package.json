@@ -1,0 +1,13 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "1.0.0",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "electron": "electron electron/main.cjs"
+  },
+  "dependencies": {
+    "electron": "^29.3.0",
+    "node-fetch": "^2.6.7"
+  }
+}
