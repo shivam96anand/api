@@ -5,7 +5,7 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 const TABS = ['Params', 'Headers', 'Body', 'Auth'];
 const AUTH_TYPES = ['None', 'Basic', 'OAuth 1.0', 'OAuth 2.0'];
 
-export default function RequestPanel({ selectedRequest, theme, onToggleTheme, onSendResponse }) {
+export default function RequestPanel({ selectedRequest, theme, onToggleTheme, onSendResponse, onUpdateRequest }) {
     const [method, setMethod] = useState('');
     const [url, setUrl] = useState('');
     const [tab, setTab] = useState('Params');
@@ -50,33 +50,21 @@ export default function RequestPanel({ selectedRequest, theme, onToggleTheme, on
         }
     }, [selectedRequest]);
 
+    // Keep request data synced
     useEffect(() => {
         if (!selectedRequest) return;
-        const folders = JSON.parse(localStorage.getItem('folders')) || [];
-        const updatedFolders = folders.map(f => {
-            if (f.id !== selectedRequest.folderId) return f;
-            return {
-                ...f,
-                requests: f.requests.map(r =>
-                    r.id === selectedRequest.id
-                        ? {
-                            ...r,
-                            method,
-                            url,
-                            params,
-                            headers,
-                            body,
-                            auth: {
-                                type: authType,
-                                oauth2: { ...oauthConfig }
-                            },
-                            lastResponse: JSON.parse(localStorage.getItem('lastResponse')) || {}
-                        }
-                        : r
-                )
-            };
+        onUpdateRequest({
+            ...selectedRequest,
+            method,
+            url,
+            params,
+            headers,
+            body,
+            auth: {
+                type: authType,
+                oauth2: { ...oauthConfig }
+            }
         });
-        localStorage.setItem('folders', JSON.stringify(updatedFolders));
     }, [method, url, params, headers, body, authType, oauthConfig]);
 
     const updateKeyValue = (list, setList, index, field, value) => {
@@ -157,7 +145,6 @@ export default function RequestPanel({ selectedRequest, theme, onToggleTheme, on
                 timestamp: new Date().toLocaleTimeString()
             };
 
-            localStorage.setItem('lastResponse', JSON.stringify(finalResponse));
             onSendResponse(finalResponse);
         } catch (err) {
             console.error('Send failed:', err);

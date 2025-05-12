@@ -10,15 +10,35 @@ export default function App() {
     const [folders, setFolders] = useState([]);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [latestResponse, setLatestResponse] = useState(null);
+    const [foldersLoaded, setFoldersLoaded] = useState(false);
 
     useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('folders')) || [];
-        setFolders(saved);
+        (async () => {
+            try {
+                const saved = await window.electronAPI.getFolders();
+                if (Array.isArray(saved)) {
+                    setFolders(saved);
+                } else {
+                    setFolders([]);
+                }
+            } catch (err) {
+                console.warn('Failed to load folders:', err);
+                setFolders([]);
+            } finally {
+                setFoldersLoaded(true);
+            }
+        })();
     }, []);
 
     useEffect(() => {
-        localStorage.setItem('folders', JSON.stringify(folders));
-    }, [folders]);
+        if (!foldersLoaded) return;
+
+        try {
+            window.electronAPI.saveFolders(folders);
+        } catch (err) {
+            console.error('Failed to persist folders:', err);
+        }
+    }, [folders, foldersLoaded]);
 
     const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
 
